@@ -1,6 +1,6 @@
 ## Optimized config for the Ultimatesensor Mini hardware by smarthomeshop.io
 ## Config made by https://espthings.io
-## Read the full blog article at: 
+## Read the full blog article at: https://www.espthings.io/ultimatesensor_mini
 ## This config utilizes the esp-idf framework and the adf pipeline for support of
 ## micro wake word locally on the esp32-s3 SOC.
 substitutions:
