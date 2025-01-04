@@ -1,6 +1,5 @@
 ## Optimized config for the Ultimatesensor Mini hardware by smarthomeshop.io
 ## Config made by https://espthings.io
-## Read the full blog article at: https://www.espthings.io/ultimatesensor_mini
 ## This config utilizes the esp-idf framework and the adf pipeline for support of
 ## micro wake word locally on the esp32-s3 SOC.
 substitutions:
@@ -16,7 +15,7 @@ substitutions:
   ## Home Assistant media_player entity ID
   home_assistant_mediaplayer: media_player.kantoor
   ## Volume of TTS playback on the Home Assistant media_player
-  ha_mediaplayer_volume: '0.25'
+  ha_mediaplayer_volume: '0.3'
   ## Awake sound URL
   awake_sound: http://192.168.207.101:8123/local/audio/awake.mp3
   ## Phases of the Voice Assistant
@@ -50,7 +49,7 @@ esphome:
   project:
     name: "Ultimatesensor.mini"
     version: ${ultimatesensor_mini_hardware_version}
-  min_version: 2025.1.0
+  min_version: 2024.5.0
   platformio_options:
     build_flags: -DBOARD_HAS_PSRAM
     board_build.flash_mode: dio
@@ -79,6 +78,7 @@ esp32:
   framework:
     type: esp-idf
     version: 4.4.8
+    platform_version: 5.4.0
     sdkconfig_options:
       CONFIG_ESP32_S3_BOX_BOARD: "y"
       CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
@@ -87,6 +87,7 @@ esp32:
       CONFIG_TCP_SND_BUF_DEFAULT: "65535"
       CONFIG_TCP_WND_DEFAULT: "512000"
       CONFIG_TCP_RECVMBOX_SIZE: "512"
+
 logger:
 
 globals:
@@ -126,7 +127,7 @@ wifi:
 ota:
   - platform: esphome
     password: !secret ota_password
-
+    
 api:
   encryption:
     key: !secret api_key
@@ -465,14 +466,15 @@ sensor:
     temperature:
       name: "${friendly_name} Temperature"
       id: scd41_temperature
-    temperature_offset: 2.3
+      filters:
+        - lambda: return x + id(scd41_temperature_offset).state;
     humidity:
       name: "${friendly_name} Humidity"
       id: scd41_humidity
       filters:
-        offset: 3
+        - lambda: return x + id(scd41_humidity_offset).state;
     measurement_mode: low_power_periodic
-    update_interval: 60s
+    update_interval: 15s
   ## SPS30 Particulate Matter (PM) Sensor
   - platform: sps30
     pm_1_0:
@@ -698,6 +700,33 @@ binary_sensor:
       return id(target3_distance).state != 0;
 
 number:
+## temperature and humidity offsets
+  - platform: template
+    name: "${friendly_name} Temperature Offset"
+    id: scd41_temperature_offset
+    initial_value: 2.3
+    min_value: -50.0
+    max_value: 50.0
+    step: 0.1
+    entity_category: "CONFIG"
+    unit_of_measurement: "°C"
+    optimistic: true
+    update_interval: never
+    mode: box
+  - platform: template
+    name: "${friendly_name} Humidity Offset"
+    id: scd41_humidity_offset
+    restore_value: true
+    initial_value: -1
+    min_value: -50.0
+    max_value: 50.0
+    step: 0.1
+    entity_category: "CONFIG"
+    unit_of_measurement: "%"
+    optimistic: true
+    update_interval: never
+    mode: box
+
   ## mmwave template sensors
   - platform: template
     name: "${friendly_name} Occupancy Off Delay"
@@ -930,6 +959,7 @@ adf_pipeline:
     id: adf_i2s_out
     i2s_audio_id: i2s_out
     i2s_dout_pin: GPIO17
+    bits_per_sample: 16bit
 
   - platform: i2s_audio
     type: audio_in
@@ -962,7 +992,7 @@ media_player:
 
 micro_wake_word:
   models:
-    - model:  ${wake_word}
+    - model: ${wake_word}
   on_wake_word_detected:
       ## Store the current Home Assistant media_player volume in a global
       - globals.set:
