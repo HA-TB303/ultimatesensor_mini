@@ -50,7 +50,7 @@ esphome:
   project:
     name: "Ultimatesensor.mini"
     version: ${ultimatesensor_mini_hardware_version}
-  min_version: 2024.7.0
+  min_version: 2025.1.0
   platformio_options:
     build_flags: -DBOARD_HAS_PSRAM
     board_build.flash_mode: dio
@@ -78,16 +78,15 @@ esp32:
   flash_size: 16MB
   framework:
     type: esp-idf
+    version: 4.4.8
     sdkconfig_options:
       CONFIG_ESP32_S3_BOX_BOARD: "y"
       CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
       CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "512"
       CONFIG_TCPIP_RECVMBOX_SIZE: "512"
-
       CONFIG_TCP_SND_BUF_DEFAULT: "65535"
       CONFIG_TCP_WND_DEFAULT: "512000"
       CONFIG_TCP_RECVMBOX_SIZE: "512"
-
 logger:
 
 globals:
