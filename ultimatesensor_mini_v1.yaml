@@ -1,6 +1,7 @@
 ## Optimized config for the Ultimatesensor Mini hardware by smarthomeshop.io
 ## Config made by https://ingeniousmakers.com
 ## This config utilizes the esp-idf framework for support of micro wake word locally on the esp32-s3 SOC.
+## it will playback all output to a Home Assistant Media Player of choice.
 substitutions:
   device_name: "ultimatesensor-mini-01"
   friendly_name: "Office presence"
@@ -8,14 +9,14 @@ substitutions:
   ## Hardware version -  This config is optimized for the "Ultimatesensor Mini Complete"
   ultimatesensor_mini_hardware_version: "V1-Complete"
   ## Preferred wake word, choose from: https://github.com/esphome/micro-wake-word-models/tree/main/models
-  wake_word: hey_jarvis 
+  wake_word: okay_nabu
   ## Set the buildt in speaker volume percentage to prevent it from distorting
   speaker_volume: 60%
   ## Home Assistant media_player entity ID
   home_assistant_mediaplayer: media_player.kantoor
   ## Volume of TTS playback on the Home Assistant media_player
   ha_mediaplayer_volume: '0.3'
-  ## Awake sound URL
+  ## Awake sound URL, make sure the file is avaulable on your Home Assistant instance.
   awake_sound: http://192.168.207.101:8123/local/audio/awake.mp3
   ## Phases of the Voice Assistant
   ## IDLE: The voice assistant is ready to be triggered by a wake-word
@@ -77,6 +78,24 @@ esp32:
       CONFIG_TCP_WND_DEFAULT: "512000"
       CONFIG_TCP_RECVMBOX_SIZE: "512"
 
+psram:
+  mode: octal
+  speed: 80MHz
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  enable_rrm: true
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+    
+api:
+  encryption:
+    key: !secret api_key
+
 logger:
 
 globals:
@@ -102,24 +121,6 @@ globals:
   - id: previous_volume
     type: float
     #restore_value: yes
-
-psram:
-  mode: octal
-  speed: 80MHz
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
-  enable_rrm: true
-
-ota:
-  - platform: esphome
-    password: !secret ota_password
-    
-api:
-  encryption:
-    key: !secret api_key
 
 ## esp restart button
 button:
@@ -1177,14 +1178,6 @@ switch:
             - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
       - script.execute: reset_led
 
-  - platform: template
-    name: "${friendly_name} Pipeline"
-    id: pipeline_switch
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_off:
-      - media_player.stop
-
 light:
   - platform: esp32_rmt_led_strip
     id: rgb_front_led
@@ -1193,6 +1186,7 @@ light:
     num_leds: 1
     rgb_order: GRB
     chipset: ws2812
+    rmt_symbols: 96
     default_transition_length: 0s
     effects:
       - addressable_color_wipe:
@@ -1220,10 +1214,12 @@ light:
           update_interval: 250ms
           min_brightness: 50%
           max_brightness: 100%
+
   - platform: esp32_rmt_led_strip
-    rgb_order: GRB
+    id: rgb_back_led
+    name: "${friendly_name} Back LED"
     pin: GPIO20
     num_leds: 1
+    rgb_order: GRB
     chipset: ws2812
-    name: "${friendly_name} Back LED"
-    id: rgb_back_led
+    rmt_symbols: 96
